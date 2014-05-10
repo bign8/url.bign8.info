@@ -6,3 +6,7 @@ ErrorDocument 404 /index.php
 	RewriteCond %{REQUEST_FILENAME} !-d
 	RewriteRule (.*) /view.php [L,QSA]
 </IfModule>
+
+<Files ~ "\.db$">
+	Require all denied
+</Files>
