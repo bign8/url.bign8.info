@@ -6,7 +6,7 @@ ini_set('display_errors', '1');
 
 try {
 	$db = new PDO('sqlite:db.db');
-	$hash = substr($_SERVER['REQUEST_URI'], 5); // TODO: convert to 1 on production
+	$hash = substr($_SERVER['REQUEST_URI'], 1); // TODO: convert to 1 on production
 	// $urlID = base_convert($hash, 36, 10);
 
 	$sth = $db->prepare("SELECT * FROM url WHERE hash=?;");
@@ -19,7 +19,7 @@ try {
 } catch (Exception $e) {
 	// TODO: pretty print errors
 	throw $e;
-	// header('Location: /url/'); // TODO?
+	header('Location: /'); // TODO?
 }
 
 ?>
@@ -36,7 +36,7 @@ try {
 	<body>
 		<div class="container">
 			<div class="page-header">
-				<h1><a href="/url/">SURL</a> <small>Slim URLs</small></h1>
+				<h1><a href="/">SURL</a> <small>Slim URLs</small></h1>
 			</div>
 
 			<p class="lead">Need some shorter url's with crazy statistics?  SURL is the place for you!</p>
@@ -44,7 +44,7 @@ try {
 			<p>SURL combines legendary URL shrinking advances with stunning analytics.  When these two forces combine, you get a top notch web experience.</p>
 
 			<div class="row">
-				<div class="col-lg-6 col-lg-offset-3 col-md-10 col-md-offset-1">
+				<div class="col-md-10 col-md-offset-1">
 					<div class="well clearfix">
 						<a href="<?=$result['url']; ?>" class="thumbnail pull-right" style="margin-bottom:0">
 							<img src="http://api.webthumbnail.org?width=300&screen=1280&format=png&url=<?=$result['url']; ?>" />
@@ -56,8 +56,6 @@ try {
 					</div>
 				</div>
 			</div>
-
-			<!-- <pre><?php print_r($result); ?></pre> -->
 		</div>
 	</body>
 </html>

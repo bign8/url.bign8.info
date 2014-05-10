@@ -21,8 +21,7 @@ try {
 		if ($hash === false) throw new Exception("Something went very wrong!", 1);
 		
 		// Redirect to preview page
-		// exit(header('Location: /url/' . $hash));
-		echo $hash;
+		exit(header('Location: /' . $hash));
 	}
 } catch (Exception $e) {
 	// TODO: pretty print errors
@@ -68,8 +67,6 @@ try {
 					</form>
 				</div>
 			</div>
-
-			<!-- <pre><?php print_r($_REQUEST); ?></pre> -->
 		</div>
 	</body>
 </html>
