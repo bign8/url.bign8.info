@@ -9,9 +9,9 @@
 	<script type="text/javascript" src="//code.jquery.com/jquery-1.11.1.js"></script>
 </head>
 <body>
-	<span id="url">Loading...</span>
-	<span id="title"></span>
-	<span id="desc"></span>
+	Link: <span id="url">Loading...</span><br/>
+	Title: <span id="title"></span><br/>
+	Desc: <span id="desc"></span>
 
 
 <script type="text/javascript">
@@ -19,53 +19,91 @@
 var N8 = N8 || {}; // Global namespace
 
 // Helper functions / library
-N8.lib = {
-	jsonp: function(url) {
+N8.lib = (function () {
+
+	// JSONP helper function
+	var jsonp_cb = {};
+	var jsonp_cnt = 0;
+	function jsonp(url, cb) {
+		if (cb) {
+			var cb_key = 'cb_' + base_convert( jsonp_cnt++, 10, BASE_CONVERT_MAX ); // change base
+			jsonp_cb[cb_key] = function (data) {
+				cb(data);
+				delete jsonp_cb[cb_key];
+			};
+			url = url.replace('CALLBACK', 'N8.lib.jsonp_cb.' + cb_key);
+		}
+
 		var script = document.createElement('script');
 		script.src = url;
 		script.type = 'text/javascript';
 		script.async = true;
 		script.onload = script.remove;
 		document.getElementsByTagName('body')[0].appendChild(script);
-	},
-};
+	}
+	
+	// Simple base conversion
+	var BASE_CONVERT_MAX = 36;
+	function base_convert(number, frombase, tobase) {
+		return parseInt(number + '', frombase | 0).toString(tobase | 0); // max radix = 36
+	}
+
+	return {
+		jsonp: jsonp,
+		jsonp_cb: jsonp_cb,
+		base_convert: base_convert,
+		BASE_CONVERT_MAX: BASE_CONVERT_MAX,
+	};
+})();
 
 // Short URL object
 N8.surl = (function () {
 	var links = [];
-
-	function base_convert(number, frombase, tobase) {
-		return parseInt(number + '', frombase | 0).toString(tobase | 0); // max radix = 36
-	}
+	
+	// Object initialization
 	function store_links(data) {
 		links = data;
-		var hash = document.location.search.substr(1);
-		if (hash.length > 0) lookup( hash );
 		delete N8.surl.store_links;
-	}
-	function lookup (key) {
-		var link = links[ base_convert( key, 36, 10 ) ];
-		document.getElementById('url').innerHTML = '<a href="' + link + '" target="_blank">' + link + '</a>';
-		N8.lib.jsonp('http://anyorigin.com/dev/get/?url=' + encodeURIComponent(link) + '&callback=N8.surl._page_meta'); // thanks anyorigin.com
-	}
-	function page_meta (data) {
-		// title
-		var titles = /<title>([^<]*)<\/title>/gi.exec(data.contents);
-		if (titles) $('#title').html(titles[1]);
+		var hash = document.location.search.substr(1);
 
-		// description
+		// Generate page html
+		if (hash.length > 0) lookup(hash).then(function (res) {
+			document.getElementById('url').innerHTML = '<a href="' + res.link + '" target="_blank">' + res.link + '</a>';
+			if (res.title) document.getElementById('title').innerHTML = res.title;
+			if (res.desc) document.getElementById('desc').innerHTML = res.desc;
+		});
+	}
+
+	// Promises so this is possible (http://www.html5rocks.com/en/tutorials/es6/promises/)
+	function lookup (key) {
+		var index = N8.lib.base_convert( key, N8.lib.BASE_CONVERT_MAX, 10 );
+		if (index >= links.length || index < 0) throw new Error('Key out of range');
+
+		var promise = new Promise(function (resolve) {
+			var link = links[ index ];
+			N8.lib.jsonp(
+				'http://anyorigin.com/dev/get/?url=' + encodeURIComponent(link) + '&callback=CALLBACK', 
+				page_meta_obj.bind(undefined, resolve, {link: link})
+			);
+		});
+
+		return promise;
+	}
+	function page_meta_obj (resolve, result, data) {
+
+		var titles = /<title>([^<]*)<\/title>/gi.exec(data.contents);
+		if (titles) result.title = titles[1];
+
 		var descs = /meta content="([^"]*)" name="description"/gi.exec(data.contents);
 		    descs = descs || /meta name="description" content="([^"]*)"/gi.exec(data.contents);
-		if (descs) $('#desc').html(descs[1]);
+		if (descs) result.desc = descs[1];
+
+		resolve(result);
 	}
 
-	// TODO: promices so this is possible
-	function awesome_lookup (key) {
-		return {
-			link: 'http://google.com/',
-			title: 'Google',
-			desc: 'blah blah blah',
-		};
+	// Usability functions
+	function index (num) {
+		return N8.lib.base_convert( num, 10, N8.lib.BASE_CONVERT_MAX );
 	}
 
 	// Main
@@ -74,7 +112,7 @@ N8.surl = (function () {
 	return {
 		store_links: store_links, // destroyed after initial use
 		lookup: lookup,
-		_page_meta: page_meta,
+		index: index,
 	};
 })();
 
