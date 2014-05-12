@@ -17,3 +17,19 @@ function convert($dividend) {
 
 	return $hash;
 }
+
+
+var request = new XMLHttpRequest();
+request.open('GET', 'http://net.tutsplus.com/tutorials/other/building-static-sites-with-jekyll/', true);
+request.onload = function() {
+	if (request.status >= 200 && request.status < 400) {
+		// Success!
+		console.log(request.responseText);
+	} else {
+		// error
+	}
+};
+request.onerror = function() {
+	console.log('Error');
+};
+request.send();
