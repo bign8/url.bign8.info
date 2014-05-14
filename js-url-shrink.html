@@ -11,8 +11,8 @@
 <body>
 	Link: <span id="url">Loading...</span><br/>
 	Title: <span id="title"></span><br/>
-	Desc: <span id="desc"></span>
-
+	Desc: <span id="desc"></span><br/>
+	Img: <span id="img"></span>
 
 <script type="text/javascript">
 
@@ -79,20 +79,6 @@ N8.lib = (function () {
 // Short URL object
 N8.surl = (function () {
 	var links = [];
-	
-	// Object initialization
-	function store_links(data) {
-		links = data;
-		delete N8.surl.store_links;
-		var hash = document.location.search.substr(1);
-
-		// Generate page html
-		if (hash.length > 0) lookup(hash).then(function (res) {
-			document.getElementById('url').innerHTML = '<a href="' + res.link + '" target="_blank">' + res.link + '</a>';
-			if (res.title) document.getElementById('title').innerHTML = res.title;
-			if (res.desc) document.getElementById('desc').innerHTML = res.desc;
-		});
-	}
 
 	// Promises so this is possible (http://www.html5rocks.com/en/tutorials/es6/promises/)
 	function lookup (key) {
@@ -102,8 +88,11 @@ N8.surl = (function () {
 		var promise = new Promise(function (resolve) {
 			var link = links[ index ];
 			N8.lib.jsonp(
-				'http://anyorigin.com/dev/get/?url=' + encodeURIComponent(link) + '&callback=CALLBACK', 
-				page_meta_obj.bind(undefined, resolve, {link: link})
+				'http://anyorigin.com/get/?url=' + encodeURIComponent(link) + '&callback=CALLBACK', 
+				page_meta_obj.bind(undefined, resolve, {
+					link: link,
+					img: 'http://api.webthumbnail.org?width=300&screen=1280&format=png&url=' + encodeURIComponent(link)
+				})
 			);
 		});
 
@@ -128,6 +117,19 @@ N8.surl = (function () {
 
 	// Main
 	N8.lib.jsonp('https://gist.githubusercontent.com/bign8/12ca258d3fee92c2e307/raw/links.js'); // callback=N8.surl.store_links
+	function store_links(data) {
+		links = data;
+		delete N8.surl.store_links;
+		var hash = document.location.search.substr(1);
+
+		// Generate page html
+		if (hash.length > 0) lookup(hash).then(function (res) {
+			document.getElementById('url').innerHTML = '<a href="' + res.link + '" target="_blank">' + res.link + '</a>';
+			document.getElementById('img').innerHTML = '<img src="' + res.img + '">';
+			if (res.title) document.getElementById('title').innerHTML = res.title;
+			if (res.desc) document.getElementById('desc').innerHTML = res.desc;
+		});
+	}
 
 	return {
 		store_links: store_links, // destroyed after initial use
