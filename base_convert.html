@@ -61,19 +61,19 @@ var reverse = function (string) {
 };
 
 var parseInt3 = function(string, radix) {
-	string = reverse(string); var number = 0;
-	for (var i = 0; i < string.length; i++) 
-		number += alphalbet.indexOf(string[i]) * Math.pow(radix, i);
+	var number = 0;
+	for (var i = 0, length = string.length - 1; i < string.length; i++)  
+		number += alphalbet.indexOf(string[length - i]) * Math.pow(radix, i);
 	return number;
 };
 
 var toString2 = function(integer, radix) {
 	var out = '';
 	while (integer >= radix) {
-		out += alphalbet[integer % radix];
+		out = alphalbet[integer % radix] + out;
 		integer = Math.floor(integer / radix);
 	};
-	return reverse(out + alphalbet[integer]);
+	return alphalbet[integer] + out;
 };
 
 
